@@ -1,48 +1,34 @@
 import { serve } from "https://deno.land/std@0.140.0/http/server.ts";
-import { configure, renderFile } from "https://deno.land/x/eta@v1.12.3/mod.ts";
-import * as addressService from "./services/addressService.js";
-
-configure({
-  views: `${Deno.cwd()}/views/`,
-});
-
-const responseDetails = {
-  headers: { "Content-Type": "text/html;charset=UTF-8" },
-};
-
-const redirectTo = (path) => {
-  return new Response(`Redirecting to ${path}.`, {
-    status: 303,
-    headers: {
-      "Location": path,
-    },
-  });
-};
-
-const addAddress = async (request) => {
-  const formData = await request.formData();
-
-  const name = formData.get("name");
-  const address = formData.get("address");
-
-  await addressService.create(name, address);
-  return redirectTo("/");
-};
-
-const listAddresses = async (request) => {
-  const data = {
-    addresses: await addressService.findAll(),
-  };
-
-  return new Response(await renderFile("index.eta", data), responseDetails);
-};
+import * as workEntryController from "./controllers/workEntryController.js";
+import * as taskController from './controllers/taskController.js';
+import * as requestUtils from "./utils/requestUtils.js"
 
 const handleRequest = async (request) => {
-  if (request.method === "POST") {
-    return await addAddress(request);
+  const url = new URL(request.url);
+
+  if (url.pathname === "/" && request.method === "GET") {
+    return requestUtils.redirectTo("/tasks");
+  } else if (url.pathname === "/tasks" && request.method === "POST") {
+    return await taskController.addTask(request);
+  } else if (url.pathname === "/tasks" && request.method === "GET") {
+    return await taskController.viewTasks(request);
+  } else if (url.pathname.match("tasks/[0-9]+") && request.method === "GET") {
+    return await taskController.viewTask(request);
+  } else if (url.pathname.match("tasks/[0-9]+/entries/[0-9]+") && request.method === "POST") {
+    return await workEntryController.finishWorkEntry(request);
+  } else if (url.pathname.match("tasks/[0-9]+/entries") && request.method === "POST") {
+    return await workEntryController.createWorkEntry(request);
+  } else if (url.pathname.match("tasks/[0-9]+") && request.method === "POST") {
+    return await taskController.completeTask(request);
   } else {
-    return await listAddresses(request);
+    return new Response("Not found", { status: 404 });
   }
 };
 
-serve(handleRequest, { port: 7777 });
+let port = 7777;
+if (Deno.args.length > 0) {
+  const lastArgument = Deno.args[Deno.args.length - 1];
+  port = Number(lastArgument);
+}
+
+serve(handleRequest, { port: port });

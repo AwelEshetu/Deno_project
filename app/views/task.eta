@@ -1,0 +1,29 @@
+<% layout("./layouts/layout.eta") %>
+
+<h1><%= it.task.name %></h1>
+
+<p>Total time taken: <%= it.totalTime %></p>
+
+<% if (!it.currentWorkEntry) { %>
+
+<h2>Complete task</h2>
+
+<form action="/tasks/<%= it.task.id %>" method="POST">
+  <input type="submit" value="Complete Task!" />
+</form>
+
+<h2>.. or, Start a work entry</h2>
+
+<form action="/tasks/<%= it.task.id %>/entries" method="POST">
+  <input type="submit" value="Start a work entry!" />
+</form>
+
+<% } else { %>
+
+<p>Current work entry started on <%= it.currentWorkEntry.started_on %></p>
+
+<form method="POST" action="/tasks/<%= it.task.id %>/entries/<%= it.currentWorkEntry.id %>">
+  <input type="submit" value="Finish work entry!" />
+</form>
+
+<% } %>

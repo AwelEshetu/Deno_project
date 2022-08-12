@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= it.title %></title>
+    <title>Task application!</title>
+    <meta charset="UTF-8">
   </head>
   <body>
-    <%~ includeFile("./partials/menu.eta") %>
     <%~ it.body %>
   </body>
 </html>
