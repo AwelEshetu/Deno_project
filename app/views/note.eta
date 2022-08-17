@@ -1,0 +1,13 @@
+<h1>Notes</h1>
+<h2>Add note</h2>
+<form method="POST">
+    <input type="text" name="title"/>
+    <textarea name="note"></textarea>
+    <input type="submit" value="Add note!"/>
+</form>
+<h2>Current notes</h2>
+<ul>
+<% it.notes.forEach((note) => { %>
+    <li><a href="/notes/<%= note.id %>"><%= note.title %></a></li>
+<% }); %>
+</ul>

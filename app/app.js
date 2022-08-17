@@ -1,34 +1,22 @@
-import { serve } from "https://deno.land/std@0.140.0/http/server.ts";
-import * as workEntryController from "./controllers/workEntryController.js";
-import * as taskController from './controllers/taskController.js';
-import * as requestUtils from "./utils/requestUtils.js"
+import { Application } from "https://deno.land/x/oak@v10.6.0/mod.ts";
+import { Session } from "https://deno.land/x/oak_sessions@v3.5.1/mod.ts";
+import { errorMiddleware } from "./middlewares/errorMiddleware.js";
+import { renderMiddleware } from "./middlewares/renderMiddleware.js";
+import { router } from "./routes/routes.js";
 
-const handleRequest = async (request) => {
-  const url = new URL(request.url);
+const app = new Application();
+app.use(errorMiddleware);
 
-  if (url.pathname === "/" && request.method === "GET") {
-    return requestUtils.redirectTo("/tasks");
-  } else if (url.pathname === "/tasks" && request.method === "POST") {
-    return await taskController.addTask(request);
-  } else if (url.pathname === "/tasks" && request.method === "GET") {
-    return await taskController.viewTasks(request);
-  } else if (url.pathname.match("tasks/[0-9]+") && request.method === "GET") {
-    return await taskController.viewTask(request);
-  } else if (url.pathname.match("tasks/[0-9]+/entries/[0-9]+") && request.method === "POST") {
-    return await workEntryController.finishWorkEntry(request);
-  } else if (url.pathname.match("tasks/[0-9]+/entries") && request.method === "POST") {
-    return await workEntryController.createWorkEntry(request);
-  } else if (url.pathname.match("tasks/[0-9]+") && request.method === "POST") {
-    return await taskController.completeTask(request);
-  } else {
-    return new Response("Not found", { status: 404 });
-  }
-};
+const session = new Session();
+app.use(session.initMiddleware());
 
+app.use(renderMiddleware);
+
+app.use(router.routes());
 let port = 7777;
 if (Deno.args.length > 0) {
   const lastArgument = Deno.args[Deno.args.length - 1];
   port = Number(lastArgument);
 }
 
-serve(handleRequest, { port: port });
+app.listen({ port: port });
